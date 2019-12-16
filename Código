@@ -1,0 +1,192 @@
+#include <stdio.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <string.h>
+#include <conio.h>
+
+// Calcula primeiro primo que não divide phi e é diferente do primo1 e primo2
+int calcularChavePublica(int phi, int p1, int p2) {
+    // Criva de Erastótenes
+    bool primo[phi];
+    memset(primo, true, sizeof(bool) * phi);
+
+    for (int i = 2; i * i < phi; i++) {
+        for (int j = i * i; j < phi; j += i) {
+            primo[j] = false;
+        }
+    }
+
+    for(int i = 2; i < phi; i++) {
+        if (primo[i] && i != p1 && i != p2 && phi % i != 0) {
+            return i;
+        }
+    }
+
+    return phi - 1;
+    getchar();
+}
+
+// Aplica o algoritmo Euclidiano estendido e encontra o segundo
+// coeficiente de Bézout
+int calcularChavePrivada(int phi, int e) {
+    int resto, quociente, yAnt = 0, y = 1;
+    int phiOrig = phi;
+
+    resto = phi;
+    while (resto != 0) {
+        quociente = phi / e;
+        resto = phi % e;
+        phi = e;
+        e = resto;
+
+        if (resto > 0) {
+            int temp = y;
+            y = yAnt - quociente * y;
+            yAnt = temp;
+        }
+    }
+
+    if (y < 0)
+        return phiOrig + y;
+    return y;
+    getchar();
+}
+
+// Potência com módulo (a^e % n)
+long long potencia(long long a, long long e, long long n) {
+    long long p = 1;
+
+    while (e != 0) {
+        if (e % 2 != 0) {
+            p = (a * p) % n;
+            e = (e - 1) / 2;
+        } else {
+            e = e / 2;
+        }
+        a = (a * a) % n;
+    }
+
+    return p;
+    getchar();
+}
+
+// A partir do vetor de caracteres 'mensagem', eleva cada um 
+// de seus caracteres (tabela ASCII) a 'e' com módulo 'n'
+// e armazena o resultado no vetor de inteiros 'criptografada'
+void criptografar(char *mensagem, int *criptografada, int e, int n) {
+    size_t len = strlen(mensagem);
+
+    for (int i = 0; i < len; i++) {
+        criptografada[i] = potencia(mensagem[i], e, n);
+    }
+    getchar();
+}
+
+// A partir do vetor de inteiros 'criptografada', eleva cada um de
+// seus inteiros a 'd' módulo 'n' e armazena o resultado no vetor
+// de caracteres 'descriptografada
+void descriptografar(int *criptografada, char *descriptografada, int d, int n, int tamanho) {
+    for(int i = 0; i < tamanho; i++) {
+        descriptografada[i] = potencia(criptografada[i], d, n);
+        getchar();
+    }
+}
+
+int main() 
+{   
+    int *mensagemCriptografada;
+    char mensagem[128];
+    int d;
+    int n;
+    int op = 0, opRetorno, a;
+	do{
+		printf("Escolha uma das opcoes para continuar:");
+		printf("\n1 - Criptografar mensagem");
+        printf("\n2 - Descriptografar mensagem");
+		printf("\n3 - Sair\n");
+		scanf("%d", &op);
+		switch (op)
+        {
+			case 1:
+            { 
+            int primo1;
+            printf("Primo 1: ");
+            scanf("%d", &primo1);
+
+            int primo2;
+            printf("Primo 2: ");
+            scanf("%d", &primo2);
+
+            printf("Mensagem: ");
+            scanf("\n%128[^\n]", mensagem);
+
+            n = primo1 * primo2;
+            int phi = (primo1 - 1) * (primo2 - 1);
+            int e = calcularChavePublica(phi, primo1, primo2);
+            d = calcularChavePrivada(phi, e);
+            
+            printf("Chave publica: %d\n", e);
+            printf("Chave privada: %d\n", d);
+
+            *mensagemCriptografada = malloc(strlen(mensagem) * sizeof(int));
+            criptografar(mensagem, mensagemCriptografada, e, n);
+            
+            printf("Mensagem criptografada:\n");
+            for (int i = 0; i < strlen(mensagem); i++) {
+                printf("%d\n", mensagemCriptografada[i]);
+            }
+  			printf("Deseja voltar ao menu?\n Caso sim selecione 1, caso nao selecione 0 \n");
+  			scanf("\n%d", &opRetorno);
+  			if(opRetorno == 0)
+            {
+  			  op = 3;
+            }
+  			else
+            {
+  			  op = 0;
+            }
+            }
+  		    break;
+
+            case 2:
+            {
+            descriptografar(mensagemCriptografada, mensagem, d, n, strlen(mensagem));
+
+            printf("Mensagem descriptografada: %s\n", mensagem);
+            free(mensagemCriptografada);
+
+            getchar();
+
+		    printf("Deseja voltar ao menu?\n Caso sim selecione 1, caso nao selecione 0 \n");
+  			scanf("\n%d", &opRetorno);
+  			if(opRetorno == 0)
+            {
+  			  op = 3;
+            }
+  			else
+            {
+  			  op = 0;
+            }
+            }
+  		    break;
+
+    		case 3:
+            {
+    			printf("Finalizando...\nAperte enter duas vezes para sair.");
+    			getchar();
+            }
+    		printf("Deseja voltar ao menu?\n Caso sim selecione 1, caso nao selecione 0 \n");
+  			scanf("\n%d", &opRetorno);
+  			if(opRetorno == 0)
+            {
+  			  op = 3;
+            }
+  			else
+            {
+  			  op = 0;
+            }
+  		    break;
+		}
+	} while(op != 3);
+    getchar();
+}
